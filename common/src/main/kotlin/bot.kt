@@ -24,7 +24,7 @@ import ai.tock.bot.connector.web.webMessage
 import ai.tock.bot.definition.Intent
 import ai.tock.shared.property
 
-val apiKey = property("tock_bot_api_key", "MY API KEY")
+val apiKey = property("tock_bot_api_key", "1e8af066-4872-4f1c-addc-151d8a13ea3c")
 
 val bot = newBot(
     apiKey,
