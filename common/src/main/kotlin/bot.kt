@@ -56,6 +56,9 @@ val bot = newBot(
         newStory("greetings") {
             end("Hello $message")
             //!!!! not used
+            //QUEEZY: https://zupimages.net/viewer.php?id=19/47/lern.png
+            //OuiChallenge: https://zupimages.net/viewer.php?id=19/47/tnmi.png
+
         },
         newStory("challenge") {
             entities.clear()
