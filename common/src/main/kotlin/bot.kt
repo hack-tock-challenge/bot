@@ -35,10 +35,9 @@ import retrofit2.Callback
 import retrofit2.Response
 import ai.tock.nlp.entity.Value
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.reflect.typeOf
 
 val apiKey = property("tock_bot_api_key", "1e8af066-4872-4f1c-addc-151d8a13ea3c")
-
-val mapper2 = mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true)
 
 val url = "http://mobile-courses-server.herokuapp.com/"
 val retrofit = Retrofit.Builder()
@@ -56,10 +55,29 @@ val bot = newBot(
         apiKey,
         newStory("greetings") {
             end("Hello $message")
+            //!!!! not used
         },
         newStory("challenge") {
+            entities.clear()
+            if  ( map.isEmpty() ) {
+                println("Calling API")
+                request.enqueue(object : Callback<List<Course>> {
+                    override fun onResponse(call: Call<List<Course>>, response: Response<List<Course>>) {
+                        val results = response.body()
+                        println(results)
+                        println(userId.id)
+                        map.putIfAbsent(userId.id, results)
+                        println(map)
+                        println("End Called API")
+
+                    }
+                    override fun onFailure(call: Call<List<Course>>, t: Throwable) {
+                        error("KO")
+                    }
+                })
+            }
+            println(map)
             val age = entityText("age")
-            println(age)
             var ageval = "String"
             when (age) {
                 "enfant" -> ageval = "child"
@@ -69,8 +87,8 @@ val bot = newBot(
             end(
                     newCard(
                             "Prêt a commencer le test?",
-                            "test",
-                            newAttachment("https://doc.tock.ai/fr/images/header.jpg"),
+                            "mode $ageval",
+                            newAttachment("http://www.carnot-blossac.fr/wp-content/uploads/2019/05/download.png"),
                             newAction("C'est Parti"),
                             newAction("C'est Parti", "https://doc.tock.ai/")
                     )
@@ -84,41 +102,27 @@ val bot = newBot(
             if(indexCourse == 0) {
                 entities.add( Entity(type="test", role="counter", value = NumberValue(0), new = true, content = "counter") )
             }
+            println(indexCourse.toInt())
+            println(map)
+            val myList = map.getValue(userId.id)
+            if ( indexCourse.toInt() < myList?.size!!){
 
-            //API CALL
-            request.enqueue(object : Callback<List<Course>> {
-                override fun onResponse(call: Call<List<Course>>, response: Response<List<Course>>) {
-                    val results = response.body()
-                    map.putIfAbsent(userId.id, results)
-                    if (results != null) {
-                        println("HERE is ALL COURSES FROM HEROKU SERVER:")
-                        val myList = map.getValue(userId.id)
+                val c = myList?.get(indexCourse.toInt())
 
-                        val c = myList?.get(indexCourse.toInt())
-                            end(
-                                    newCard(
-                                            "${c?.title}",
-                                            "${c?.time}",
-                                            newAttachment("${c?.img}"),
-                                            newAction("Action1"),
-                                            newAction("Tock", "https://doc.tock.ai")
-                                    )
-                            )
-                    }
-                }
-                override fun onFailure(call: Call<List<Course>>, t: Throwable) {
-                    error("KO")
-                }
-            })
-//            end(
-//                    newCard(
-//                            "Hey",
-//                            "Where are you going?",
-//                            newAttachment("https://upload.wikimedia.org/wikipedia/commons/2/22/Heckert_GNU_white.svg"),
-//                            newAction("Action1"),
-//                            newAction("Tock", "https://doc.tock.ai")
-//                    )
-//            )
+                end(
+                        newCard(
+                                "${c?.title}",
+                                "${c?.time}",
+                                newAttachment("${c?.img}"),
+                                newAction("Action1"),
+                                newAction("Tock", "https://doc.tock.ai")
+                        )
+                )
+            }
+            else{
+                removeEntity(role="counter")
+                end("Le questionnaire est terminé. Merci de votre participation")
+            }
         },
         newStory("card") {
             //cleanup entities
