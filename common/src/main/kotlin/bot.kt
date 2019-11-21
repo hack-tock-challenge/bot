@@ -31,6 +31,9 @@ val bot = newBot(
     newStory("greetings") {
         end("Hello $message")
     },
+    newStory("startchallenge") {
+        end("Ready for $message")
+    },
     newStory("card") {
         //cleanup entities
         val test = entityText("location")
