@@ -42,6 +42,24 @@ val bot = newBot(
                 )
         )
     },
+    newStory("challenge") {
+        val age = entityText("age")
+        println(age)
+        var ageval = "String"
+        when (age) {
+            "enfant" -> ageval = "child"
+            "adulte" -> ageval = "adult"
+            else -> ageval = "agval"
+        }
+        end(
+                newCard(
+                        "Prêt a commencer le test?",
+                        "",
+                        newAttachment("http://www.carnot-blossac.fr/wp-content/uploads/2019/05/download.png"),
+                        newAction("C'est Parti")
+                )
+        )
+    },
     newStory("card") {
         //cleanup entities
         val test = entityText("location")
