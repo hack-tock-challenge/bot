@@ -32,7 +32,15 @@ val bot = newBot(
         end("Hello $message")
     },
     newStory("startchallenge") {
-        end("Ready for $message")
+        end(
+                newCard(
+                        "Hey",
+                        "Where are you going?",
+                        newAttachment("https://upload.wikimedia.org/wikipedia/commons/2/22/Heckert_GNU_white.svg"),
+                        newAction("Action1"),
+                        newAction("Tock", "https://doc.tock.ai")
+                )
+        )
     },
     newStory("card") {
         //cleanup entities
