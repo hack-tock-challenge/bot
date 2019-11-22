@@ -21,6 +21,7 @@ import ai.tock.bot.api.client.newBot
 import ai.tock.bot.api.client.newStory
 import ai.tock.bot.api.client.unknownStory
 import ai.tock.bot.api.model.context.Entity
+import ai.tock.bot.api.model.message.bot.Card
 import ai.tock.bot.connector.web.webButton
 import ai.tock.bot.connector.web.webMessage
 import ai.tock.bot.definition.Intent
@@ -149,14 +150,15 @@ val bot = newBot(
                 val ch1= c?.choices?.get(0)?.text
                 val ch2= c?.choices?.get(1)?.text
                 val ch3= c?.choices?.get(2)?.text
+                val txt1 = c?.messages.get(0)
 
                 if ( c?.type == "choices" ){
                     //On retourne une carte a actions
+                    send( c?.messages.get(0))
                     send (
                             newCard(
-                            "$c?.messages[0]",
-                            "$c?.messages[1]",
-                            null,
+                            c?.messages.get(1),"",
+                            newAttachment("https://zupimages.net/up/19/47/tnmi.png"),
                             newAction("$ch1"),
                             newAction("$ch2"),
                             newAction("$ch3")
@@ -198,13 +200,20 @@ val bot = newBot(
             println(entityType)
             //test de la reponse
 
+
+            println(message.toString())
+            if ( c?.type == "choices" ){
+                if ( c?.answer ==  message.toString() ){
+                    end(
+                            cardCongrat(c)
+                    )
+                }
+            }
+
             if ( c?.answer ==  entityType ){
                 if (c != null) {
                     end(
-                            newCard(
-                                    c.congratMessage,null, null,
-                                    newAction("Question suivante")
-                            )
+                            cardCongrat(c)
                     )
                 }
             }
@@ -266,6 +275,15 @@ val bot = newBot(
             }
         }
 )
+
+private fun ClientBus.cardCongrat(c: Question): Card {
+    return newCard(
+            c.congratMessage,
+            "",
+            newAttachment("https://zupimages.net/up/19/47/tnmi.png"),
+            newAction("Question suivante")
+    )
+}
 
 private fun ClientBus.majListIndex(): Number {
     val indexCourse = (entities.find { it.role == "counter" }?.apply { value = NumberValue((value as NumberValue).value.toInt() + 1) }?.value as? NumberValue)?.value
