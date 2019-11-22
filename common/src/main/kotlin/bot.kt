@@ -170,19 +170,22 @@ val bot = newBot(
         newStory("reponse") {
 
             //recuperer la question courante
-            val counter = entityText("counter")
+            val counter = entityValue<NumberValue>("counter")
             println(counter)
+            println(counter?.value)
             val myList = map.getValue(userId.id)
-            val c = counter?.toInt()?.let { myList?.get(it) }
+            val c = counter?.value?.toInt()?.let { myList?.get(it) }
 
             //recuperer l'entité type de la reponse de l'utilisateur
             val entityType = c?.type?.let { entityText(it) }
             println(entityType)
+            //test de la reponse
+            //if
 
             end(
                     newCard(
                             "reponse attendue: ${c?.answer}",
-                            "$entityType"
+                            "votre réponse: $entityType"
                     )
             )
         },
