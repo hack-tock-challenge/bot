@@ -90,7 +90,7 @@ val bot = newBot(
                     println(map)
                     println("End Called API")
                     val multiPlayer = entityText("multiPlayer")
-                    if ( entityText("multiPlayer").isNullOrEmpty() )
+                    if ( multiPlayer.isNullOrEmpty() )
                         end(
                                 newCard(
                                         "Seul ou contre un autre voyageur?",
@@ -100,9 +100,8 @@ val bot = newBot(
                                         newAction("duo")
                                 )
                         )
-
                     else {
-                        end("ok")
+                        end("Mode $multiPlayer")
                     }
 
                 }
@@ -110,18 +109,6 @@ val bot = newBot(
                     error("KO")
                 }
             })
-
-
-            /*else {
-                end(
-                        newCard(
-                                "Prêt a commencer le test?",
-                                "mode $multiPlayer)",
-                                newAttachment("https://zupimages.net/up/19/47/tnmi.png"),
-                                newAction("C'est Parti")
-                        )
-                )
-            }*/
         },
         newStory("challengesolo") {
             //cleanup entities
@@ -180,13 +167,24 @@ val bot = newBot(
             }
         },
         newStory("reponse") {
-            val multiPlayer = entityText("multiPlayer")
+
+            //recuperer la question courante
+            val counter = entityText("counter")
+            println(counter)
+            val myList = map.getValue(userId.id)
+            val c = counter?.toInt()?.let { myList?.get(it) }
+
+            //recuperer l'entité type de la reponse de l'utilisateur
+            val entityType = c?.type?.let { entityText(it) }
+            println(entityType)
+
+
+
+
             end(
                     newCard(
-                            "Prêt a commencer le test?",
-                            "",
-                            newAttachment("https://zupimages.net/up/19/47/tnmi.png"),
-                            newAction("C'est Parti")
+                            "reponse attendue: ${c?.answer}",
+                            "$entityType"
                     )
             )
         },
