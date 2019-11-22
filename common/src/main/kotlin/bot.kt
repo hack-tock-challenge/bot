@@ -180,14 +180,19 @@ val bot = newBot(
             val entityType = c?.type?.let { entityText(it) }
             println(entityType)
             //test de la reponse
-            //if
-
-            end(
-                    newCard(
+            if ( c?.answer ==  entityType ){
+                end("Bravo, c'est la bonne reponse")
+            }
+            else{
+                end(
+                        newCard(
                             "reponse attendue: ${c?.answer}",
-                            "votre réponse: $entityType"
-                    )
-            )
+                            "votre réponse: $entityType",
+                                null,
+                                newAction("Question suivante")
+                        )
+                )
+            }
         },
         newStory("card") {
             //cleanup entities
