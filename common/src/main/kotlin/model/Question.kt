@@ -1,5 +1,6 @@
 package ai.tock.demo.common
 
+import ai.tock.demo.common.model.Choice
 import retrofit2.Call
 import retrofit2.http.GET
 
@@ -34,7 +35,8 @@ data class Question(
         val order: String?,
         val type: String?,
         val pushTime: String?,
-        val image: String?
+        val image: String?,
+        val choices: List<Choice>?
 
 ) {
 

@@ -106,6 +106,7 @@ val bot = newBot(
 
                 }
                 override fun onFailure(call: Call<List<Question>>, t: Throwable) {
+                    //send("Erreur Technique: Désolé, je n'ai pas pu vous proposer de question, merci de reessayer plus tard.")
                     error("KO")
                 }
             })
@@ -177,9 +178,6 @@ val bot = newBot(
             //recuperer l'entité type de la reponse de l'utilisateur
             val entityType = c?.type?.let { entityText(it) }
             println(entityType)
-
-
-
 
             end(
                     newCard(
