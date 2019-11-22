@@ -16,6 +16,7 @@
 
 package ai.tock.demo.common
 
+import ai.tock.bot.api.client.ClientBus
 import ai.tock.bot.api.client.newBot
 import ai.tock.bot.api.client.newStory
 import ai.tock.bot.api.client.unknownStory
@@ -39,7 +40,9 @@ import kotlin.reflect.typeOf
 
 val apiKey = property("tock_bot_api_key", "1e8af066-4872-4f1c-addc-151d8a13ea3c")
 
-val url = "http://mobile-courses-server.herokuapp.com/"
+//val url = "http://mobile-courses-server.herokuapp.com/"
+val url = "https://f1f659e2.ngrok.io/"
+
 val retrofit = Retrofit.Builder()
         .baseUrl(url)
         .addJacksonConverter(mapper) // the TOCK Jackson mapper, see Jackson.kt
@@ -47,53 +50,99 @@ val retrofit = Retrofit.Builder()
 
 val service = retrofit.create(RestApiService::class.java!!)
 
-val request = service.listCourses()
-
-val map = ConcurrentHashMap<String, List<Course>?>()
+val map = ConcurrentHashMap<String, List<Question>?>()
 
 val bot = newBot(
         apiKey,
         newStory("greetings") {
-            end("Hello $message")
-            //!!!! not used
-            //QUEEZY: https://zupimages.net/viewer.php?id=19/47/lern.png
-            //OuiChallenge: https://zupimages.net/viewer.php?id=19/47/tnmi.png
+            println(userId.id)
+            entities.clear()
+            map.clear()
+            end(
+                    newCard(
+                            "Bonjour, je suis Quizzy?",
+                            "Les Office de Tourisme te proposent des questions sur ton parcours !",
+                            newAttachment("https://zupimages.net/up/19/47/lern.png"),
+                            newAction("Mode adulte"),
+                            newAction("Mode Famille")
+                    )
+            )
 
         },
         newStory("challenge") {
-            entities.clear()
-            if  ( map.isEmpty() ) {
-                println("Calling API")
-                request.enqueue(object : Callback<List<Course>> {
-                    override fun onResponse(call: Call<List<Course>>, response: Response<List<Course>>) {
-                        val results = response.body()
-                        println(results)
-                        println(userId.id)
-                        map.putIfAbsent(userId.id, results)
-                        println(map)
-                        println("End Called API")
-
-                    }
-                    override fun onFailure(call: Call<List<Course>>, t: Throwable) {
-                        error("KO")
-                    }
-                })
-            }
-            println(map)
             val age = entityText("age")
             var ageval = "String"
             when (age) {
                 "enfant" -> ageval = "child"
                 "adulte" -> ageval = "adult"
-                else -> ageval = "agval"
+                else -> ageval = "any!!!Warning"
             }
+            println(ageval)
+            println(map)
+
+            println("Calling API")
+            service.listQuestion().enqueue(object : Callback<List<Question>> {
+                override fun onResponse(call: Call<List<Question>>, response: Response<List<Question>>) {
+                    val results = response.body()
+                    println(results)
+                    println(userId.id)
+                    map.putIfAbsent(userId.id, results)
+                    println(map)
+                    println("End Called API")
+                    val multiPlayer = entityText("multiPlayer")
+                    if ( entityText("multiPlayer").isNullOrEmpty() )
+                        end(
+                                newCard(
+                                        "Seul ou contre un autre voyageur?",
+                                        "mode $ageval",
+                                        newAttachment("https://zupimages.net/up/19/47/tnmi.png"),
+                                        newAction("solo"),
+                                        newAction("duo")
+                                )
+                        )
+
+                    else {
+                        end("ok")
+                    }
+
+                }
+                override fun onFailure(call: Call<List<Question>>, t: Throwable) {
+                    error("KO")
+                }
+            })
+
+
+            /*else {
+                end(
+                        newCard(
+                                "Prêt a commencer le test?",
+                                "mode $multiPlayer)",
+                                newAttachment("https://zupimages.net/up/19/47/tnmi.png"),
+                                newAction("C'est Parti")
+                        )
+                )
+            }*/
+        },
+        newStory("challengesolo") {
+            //cleanup entities
+            val multiPlayer = entityText("multiPlayer")
             end(
                     newCard(
                             "Prêt a commencer le test?",
-                            "mode $ageval",
-                            newAttachment("http://www.carnot-blossac.fr/wp-content/uploads/2019/05/download.png"),
-                            newAction("C'est Parti"),
-                            newAction("C'est Parti", "https://doc.tock.ai/")
+                            "",
+                            newAttachment("https://zupimages.net/up/19/47/tnmi.png"),
+                            newAction("C'est Parti")
+                    )
+            )
+        },
+        newStory("challengemulti") {
+            val multiPlayer = entityText("multiPlayer")
+            end(
+                    newCard(
+                            "Prêt a commencer le test?",
+                            "",
+                            newAttachment("https://zupimages.net/up/19/47/tnmi.png"),
+                            newAction("C'est Parti")
                     )
             )
         },
@@ -101,31 +150,45 @@ val bot = newBot(
             //initialisation e l'entité qui persiste l'index de la liste pour connaitre la question a poser
             val counter = entityText("counter")
 
-            val indexCourse = (entities.find { it.role == "counter" }?.apply { value = NumberValue((value as NumberValue).value.toInt() + 1) }?.value as? NumberValue)?.value ?: 0
-            if(indexCourse == 0) {
-                entities.add( Entity(type="test", role="counter", value = NumberValue(0), new = true, content = "counter") )
-            }
+            val indexCourse = majListIndex()
+
             println(indexCourse.toInt())
             println(map)
             val myList = map.getValue(userId.id)
             if ( indexCourse.toInt() < myList?.size!!){
 
                 val c = myList?.get(indexCourse.toInt())
+                if (c.image.isNullOrEmpty()){
+                    for (item in c?.messages) {
+                        send(item)
+                    }
+                }
+                else {
+                    newCard(
+                            c?.messages[0],
+                            c?.messages[1],
+                            newAttachment(c?.image)
+                    )
+                }
 
                 end(
-                        newCard(
-                                "${c?.title}",
-                                "${c?.time}",
-                                newAttachment("${c?.img}"),
-                                newAction("Action1"),
-                                newAction("Tock", "https://doc.tock.ai")
-                        )
                 )
             }
             else{
                 removeEntity(role="counter")
                 end("Le questionnaire est terminé. Merci de votre participation")
             }
+        },
+        newStory("reponse") {
+            val multiPlayer = entityText("multiPlayer")
+            end(
+                    newCard(
+                            "Prêt a commencer le test?",
+                            "",
+                            newAttachment("https://zupimages.net/up/19/47/tnmi.png"),
+                            newAction("C'est Parti")
+                    )
+            )
         },
         newStory("card") {
             //cleanup entities
@@ -174,3 +237,12 @@ val bot = newBot(
             }
         }
 )
+
+private fun ClientBus.majListIndex(): Number {
+    val indexCourse = (entities.find { it.role == "counter" }?.apply { value = NumberValue((value as NumberValue).value.toInt() + 1) }?.value as? NumberValue)?.value
+            ?: 0
+    if (indexCourse == 0) {
+        entities.add(Entity(type = "test", role = "counter", value = NumberValue(0), new = true, content = "counter"))
+    }
+    return indexCourse
+}
