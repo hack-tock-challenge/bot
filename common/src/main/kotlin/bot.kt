@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import retrofit2.Retrofit
 import ai.tock.demo.common.service.RestApiService
 import ai.tock.nlp.entity.NumberValue
+import ai.tock.nlp.entity.StringValue
 import ai.tock.shared.addJacksonConverter
 import ai.tock.shared.jackson.mapper
 import retrofit2.Call
@@ -74,8 +75,8 @@ val bot = newBot(
             val age = entityText("age")
             var ageval = "String"
             when (age) {
-                "enfant" -> ageval = "child"
-                "adulte" -> ageval = "adult"
+                "enfant" -> ageval = "famille"
+                "adulte" -> ageval = "adulte"
                 else -> ageval = "any!!!Warning"
             }
             println(ageval)
@@ -147,35 +148,34 @@ val bot = newBot(
             if ( indexCourse.toInt() < myList?.size!!){
 
                 val c = myList?.get(indexCourse.toInt())
-                val ch1= c?.choices?.get(0)?.text
-                val ch2= c?.choices?.get(1)?.text
-                val ch3= c?.choices?.get(2)?.text
-                val txt1 = c?.messages.get(0)
+
+                val image = c?.image
 
                 if ( c?.type == "choices" ){
+                    val ch1= c?.choices?.get(0)?.text
+                    val ch2= c?.choices?.get(1)?.text
+                    val ch3= c?.choices?.get(2)?.text
                     //On retourne une carte a actions
                     send( c?.messages.get(0))
                     send (
                             newCard(
                             c?.messages.get(1),"",
-                            newAttachment("https://zupimages.net/up/19/47/tnmi.png"),
+                            newAttachment("$image"),
                             newAction("$ch1"),
                             newAction("$ch2"),
                             newAction("$ch3")
                             )
                     )
                 }
-                else if (c.image.isNullOrEmpty()){
-                    for (item in c?.messages) {
-                        send(item)
-                    }
-                }
-                else {
-                    newCard(
-                            c?.messages[0],
-                            c?.messages[1],
-                            newAttachment(c?.image)
+                else  {
+
+                    send(
+                            newCard(
+                            c?.messages.get(0),"",
+                            newAttachment("$image")
+                            )
                     )
+                    send(c?.messages.get(1))
                 }
 
                 end(
@@ -183,7 +183,7 @@ val bot = newBot(
             }
             else{
                 removeEntity(role="counter")
-                end("Le questionnaire est terminé. Merci de votre participation")
+                end("Le questionnaire est terminé. Merci de votre participation. Vous avez gagné 3 points")
             }
         },
         newStory("reponse") {
@@ -195,27 +195,43 @@ val bot = newBot(
             val myList = map.getValue(userId.id)
             val c = counter?.value?.toInt()?.let { myList?.get(it) }
 
-            //recuperer l'entité type de la reponse de l'utilisateur
-            val entityType = c?.type?.let { entityText(it) }
+            //recuperer l'entité entity de la reponse de l'utilisateur
+            val entityType = c?.entity?.let { entityValue<Value>(it) }
             println(entityType)
             //test de la reponse
+            var answer = ""
+            when(entityType) {
+                is NumberValue -> {
+                    answer = entityType.value.toString()
+                    println("NUMBER")
+                }
+                is StringValue -> {
+                    answer = entityType.value
+                    println(entityType)
+                    println("String")
 
+                }
+                else -> {
+                    println("OTHER")
+                    println("none")
+                    answer="beterrave"
+                }
+            }
 
-            println(message.toString())
             if ( c?.type == "choices" ){
                 if ( c?.answer ==  message.toString() ){
+                    println("choice")
                     end(
                             cardCongrat(c)
                     )
                 }
             }
-
-            if ( c?.answer ==  entityType ){
-                if (c != null) {
-                    end(
+            else if ( c?.answer ==  answer ){
+                println("answer")
+                end(
                             cardCongrat(c)
                     )
-                }
+
             }
             else{
                 end(

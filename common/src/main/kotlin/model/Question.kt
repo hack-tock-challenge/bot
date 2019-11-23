@@ -36,6 +36,7 @@ data class Question(
         val type: String?,
         val pushTime: String?,
         val image: String?,
+        val entity: String?,
         val choices: List<Choice>?
 
 ) {
